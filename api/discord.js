@@ -1,16 +1,14 @@
 export default async function handler(req, res) {
   const DISCORD_BASE = "https://discord.com";
-  const { path } = req.query;
+  const { path, token } = req.query; // token passed in query
 
-  // get headers safely (GAS lowercases everything)
-  const auth = req.headers.authorization || req.headers.Authorization;
+  const auth = token ? `Bot ${token}` : req.headers.authorization;
   const ua =
     req.headers["user-agent"] ||
-    req.headers["User-Agent"] ||
     "ChannelSorter (https://minandliang.com,1.0)";
 
   if (!auth) {
-    return res.status(400).json({ error: "Missing Authorization header" });
+    return res.status(400).json({ error: "Missing bot token" });
   }
 
   try {
