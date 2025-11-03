@@ -1,24 +1,28 @@
 export default async function handler(req, res) {
   const DISCORD_BASE = "https://discord.com";
-  const { path, token } = req.query; // token passed in query
+  const { path, token } = req.query;
 
-  const auth = token ? `Bot ${token}` : req.headers.authorization;
-  const ua =
-    req.headers["user-agent"] ||
-    "ChannelSorter (https://minandliang.com,1.0)";
+  // keep authorization priority: query > header
+  const authHeader =
+    token ? `Bot ${token}` : req.headers.authorization || req.headers.Authorization;
 
-  if (!auth) {
+  if (!authHeader) {
     return res.status(400).json({ error: "Missing bot token" });
   }
+
+  // clone all headers from the request
+  const headers = { ...req.headers };
+  // enforce correct Authorization and UA
+  headers["Authorization"] = authHeader;
+  headers["User-Agent"] =
+    req.headers["user-agent"] ||
+    "ChannelSorter (https://minandliang.com,1.0)";
+  headers["Content-Type"] = "application/json";
 
   try {
     const r = await fetch(`${DISCORD_BASE}/${path}`, {
       method: req.method,
-      headers: {
-        Authorization: auth,
-        "User-Agent": ua,
-        "Content-Type": "application/json",
-      },
+      headers,
       body:
         req.method === "GET" || req.method === "HEAD"
           ? null
